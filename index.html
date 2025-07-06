@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Online CV Generator</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 0;
+      padding: 2rem;
+      background: #f4f4f4;
+      color: #333;
+      direction: ltr;
+      text-align: left;
+    }
+    h1 { text-align: center; margin-bottom: 2rem; }
+    section { background:#fff;padding:1rem 1.5rem;margin-bottom:1.5rem;border-radius:12px;box-shadow:0 2px 4px rgba(0,0,0,0.08);}
+    label{display:block;margin-bottom:0.5rem;font-weight:600;}
+    input,textarea,select{width:100%;padding:0.5rem;margin-bottom:1rem;border:1px solid #ccc;border-radius:6px;font-size:0.95rem;box-sizing:border-box;}
+    input[type="file"]{padding:0.4rem 0.2rem;}
+    button{padding:0.6rem 1rem;border:none;border-radius:6px;cursor:pointer;font-weight:600;}
+    .primary{background:#0077cc;color:#fff;}
+    .secondary{background:#555;color:#fff;}
+    #cv-preview{display:none;}
+    #cv-output{max-width:800px;margin:auto;background:#fff;padding:1rem 2rem;border-radius:8px;box-shadow:0 0 8px #ccc;}
+    .photo{width:120px;height:120px;object-fit:cover;border-radius:50%;float:right;margin:0 0 1rem 1rem;}
+    @media print{body{background:#fff;}#cv-form,.no-print{display:none!important;}#cv-preview{display:block!important;}}
+    #language-select{max-width:150px;margin:0 auto 2rem auto;display:block;}
+    footer{text-align:center;margin-top:2rem;color:#666;font-size:0.9rem;}
+  </style>
+</head>
+<body>
+  <select id="language-select" aria-label="Select language">
+    <option value="en">English</option>
+    <option value="ar">العربية</option>
+    <option value="de">Deutsch</option>
+  </select>
+
+  <h1 id="title">Online CV Generator</h1>
+
+  <form id="cv-form">
+    <section>
+      <h2 id="personal-info-title">Personal Information</h2>
+      <label id="fullName-label" for="fullName">Full Name
+        <input id="fullName" required />
+      </label>
+      <label id="email-label" for="email">Email
+        <input id="email" type="email" required />
+      </label>
+      <label id="phone-label" for="phone">Phone
+        <input id="phone" type="tel" />
+      </label>
+      <label id="address-label" for="address">Address
+        <input id="address" />
+      </label>
+      <label id="photo-label" for="photo">Photo
+        <input id="photo" type="file" accept="image/*" />
+      </label>
+    </section>
+
+    <section>
+      <h2 id="education-title">Education</h2>
+      <textarea id="education" rows="4"></textarea>
+    </section>
+
+    <section>
+      <h2 id="experience-title">Experience</h2>
+      <textarea id="experience" rows="4"></textarea>
+    </section>
+
+    <section>
+      <h2 id="skills-title">Skills</h2>
+      <textarea id="skills" rows="3"></textarea>
+    </section>
+
+    <section class="no-print">
+      <button type="button" class="primary" onclick="generateCV()">Preview CV</button>
+      <button type="button" class="secondary" onclick="window.print()">Print</button>
+      <button type="button" class="secondary" onclick="downloadPDF()">Download PDF</button>
+    </section>
+  </form>
+
+  <section id="cv-preview">
+    <div id="cv-output"></div>
+  </section>
+
+  <footer>Created by Ali</footer>
+
+  <script>
+    function generateCV() {
+      const name = document.getElementById('fullName').value;
+      const email = document.getElementById('email').value;
+      const phone = document.getElementById('phone').value;
+      const address = document.getElementById('address').value;
+      const education = document.getElementById('education').value.replace(/\n/g,'<br>');
+      const experience = document.getElementById('experience').value.replace(/\n/g,'<br>');
+      const skills = document.getElementById('skills').value.replace(/\n/g,'<br>');
+      const photoInput = document.getElementById('photo');
+      const output = document.getElementById('cv-output');
+      let photoHTML='';
+      if(photoInput.files.length>0){const url=URL.createObjectURL(photoInput.files[0]);photoHTML='<img src="'+url+'" class="photo" alt="Profile Photo" />';}
+      output.innerHTML=photoHTML+
+        '<h2>'+name+'</h2>'+
+        '<p><strong>Email:</strong> '+email+'</p>'+
+        '<p><strong>Phone:</strong> '+phone+'</p>'+
+        '<p><strong>Address:</strong> '+address+'</p>'+
+        '<h3>Education</h3><p>'+education+'</p>'+
+        '<h3>Experience</h3><p>'+experience+'</p>'+
+        '<h3>Skills</h3><p>'+skills+'</p>';
+      localStorage.setItem('cvData',JSON.stringify({name,email,phone,address,education,experience,skills}));
+      document.getElementById('cv-preview').style.display='block';
+      window.scrollTo(0,document.body.scrollHeight);
+    }
+    function downloadPDF(){
+      const element=document.getElementById('cv-output');
+      html2pdf().set({margin:0.5,filename:'my_cv.pdf',image:{type:'jpeg',quality:0.98},html2canvas:{scale:2},jsPDF:{unit:'in',format:'letter',orientation:'portrait'}}).from(element).save();
+    }
+    window.onload=function(){
+      const saved=localStorage.getItem('cvData');
+      if(saved){
+        const d=JSON.parse(saved);
+        document.getElementById('fullName').value=d.name||'';
+        document.getElementById('email').value=d.email||'';
+        document.getElementById('phone').value=d.phone||'';
+        document.getElementById('address').value=d.address||'';
+        document.getElementById('education').value=d.education?.replace(/<br>/g,'\n')||'';
+        document.getElementById('experience').value=d.experience?.replace(/<br>/g,'\n')||'';
+        document.getElementById('skills').value=d.skills?.replace(/<br>/g,'\n')||'';
+      }
+    };
+  </script>
+</body>
+</html>
